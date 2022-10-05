@@ -1,0 +1,83 @@
+#AWS provider
+provider "aws" {
+  region     = "us-east-1"
+  access_key = "AKIAYEEFPP6PMJ237NIA"
+  secret_key = "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"
+}
+
+#resource vpc
+
+resource "aws_vpc" "ibm_vpc" {
+  cidr_block = "10.0.0.0/16"
+    tags = {
+    Name = "ibm vpc"
+  }
+}
+
+#public subnet
+
+resource "aws_subnet" "ibm_pub_sn" {
+  vpc_id     = aws_vpc.ibm_vpc.id
+  cidr_block = "10.0.1.0/24"
+  map_public_ip_on_launch= "true"
+
+  tags = {
+    Name = "IBM_PUB_SN"
+  }
+}
+#private subnet
+
+resource "aws_subnet" "ibm_pvt_sn" {
+  vpc_id     = aws_vpc.ibm_vpc.id
+  cidr_block = "10.0.2.0/24"
+  map_public_ip_on_launch= "false"
+
+  tags = {
+    Name = "IBM_PVT_SN"
+  }
+}
+
+#internet gateway
+
+resource "aws_internet_gateway" "ibm_igw" {
+  vpc_id = aws_vpc.ibm_vpc.id
+
+  tags = {
+    Name = "IBM_IGW"
+}
+}
+
+#public route table
+resource "aws_route_table" "ibm_rt" {
+  vpc_id = aws_vpc.ibm_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.ibm_igw.id
+  }
+
+  tags = {
+    Name = "IBM_PUB_RT"
+  }
+}
+#private route table
+resource "aws_route_table" "ibm_pvt_rt" {
+  vpc_id = aws_vpc.ibm_vpc.id
+
+  tags = {
+    Name = "IBM_PVT_RT"
+  }
+}
+#pub rt association
+
+resource "aws_route_table_association" "ibm_pub_assc" {
+  subnet_id      = aws_subnet.ibm_pub_sn.id
+  route_table_id = aws_route_table.ibm_rt.id
+}
+
+#pvt rt association
+
+resource "aws_route_table_association" "ibm_pvt_assc" {
+  subnet_id      = aws_subnet.ibm_pvt_sn.id
+  route_table_id = aws_route_table.ibm_pvt_rt.id
+}
